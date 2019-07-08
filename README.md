@@ -6,4 +6,8 @@ As researcher studying urban logistics and e-commerce, ride-alongs are a great w
 The objective of this work is to detail a data collection protocol to perform during a ride-along and report quantitative measures on the routes taken, parking choices and location and deliveries performed.
 
 ## Data collection protocol
+During the ride-along, the observed will be tracked by the Trails mobile app (https://trails.io/en/), a free-of-charge app used to track runs. GPS traces can be exported from the app at the end of the ride-along as GPX file.
 
+The attached R file contains code to analyze the GPX file and visualize the routes taken and compile different descriptive statistics.
+
+Two samples of ride-along GPX files are attached.
