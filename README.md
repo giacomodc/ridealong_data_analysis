@@ -10,4 +10,4 @@ During the ride-along, the observer will track him/herself using a GPS tracking 
 
 The attached R file contains code to analyze the GPX file and visualize the routes taken and compile different descriptive statistics.
 
-Two samples of ride-along GPX files are attached.
+Two samples of ride-along GPX files are attached. 
