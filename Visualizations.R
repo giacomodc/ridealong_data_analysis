@@ -19,7 +19,10 @@ library(raster)
 library(sp)
 library(ggplot2)
 library(gridExtra)
+library(grid)
 library(mapview)
+library(reshape2)
+library(scales)
 
 # set directory here
 setwd("~/Documents/University/University of Washington/RA positions/SCTL/DOE/Ridealong Data analysis")
@@ -136,12 +139,13 @@ calc_segments <- function(seg_data){
 # calculate speed and distance profile
 calc_profile_sd <- function(seg_data){
   seg_data <- calc_segments(seg_data)
-  hold <- as.data.frame(matrix(NA, nrow = max(seg_data$segm_id), ncol = 3))
-  colnames(hold) <- c("time_span", "distance_covered", "mode")
+  hold <- as.data.frame(matrix(NA, nrow = max(seg_data$segm_id), ncol = 4))
+  colnames(hold) <- c("time_span", "distance_covered", "mode", "avg.speed")
   for (i in (1:max(seg_data$segm_id))){
     hold[i, 1] <- difftime(max(seg_data$time[seg_data$segm_id == i]), min(seg_data$time[seg_data$segm_id == i]), units = "mins") # time in hours
     hold[i, 2] <- 1/1000*sum(abs(seg_data$dist.to.prev[seg_data$segm_id == i]), na.rm=TRUE)
     hold[i, 3] <- as.character(unique(seg_data$Segment[seg_data$segm_id == i]))
+    hold[i, 4] <- mean(seg_data$speed.m.per.h[seg_data$segm_id == i])
   }
   return(hold)
 }
@@ -207,66 +211,109 @@ get_dri <- function(seg_data){
   return(summary.driving)
 }
 
-# MEDICAL ROUTES
-summary.data <- get_data(segm_med)
-summary.deliveries <- get_del(segm_med)
-summary.driving <- get_dri(segm_med)
-
-# plot comparisons
-plot_comp_time <- ggplot(aes(x= mode, y = time_span, fill = mode), data = summary.data) + geom_boxplot() + theme_light() + ylab("time in minutes") + xlab("process step") + ggtitle("Time span distributions")
-plot_comp_distance <- ggplot(aes(x= mode, y = distance_covered, fill = mode), data = summary.data) + geom_boxplot() + theme_light() + ylab("distance in km") + xlab("process step") + ggtitle("Distance distributions")
-# plot deliveries
-plot_deliver_time <- (ggplot(aes(x = index, y = time_span, fill = distance_covered), data = summary.deliveries)
-                      + geom_bar(stat= "identity") + ylab("delivery time in mins") 
-                      + theme_light() + ggtitle("Delivery time spans")) + scale_x_continuous(name = "Stop index", seq(1, nrow(summary.deliveries),1))
-plot_deliver_dist <- (ggplot(aes(x = index, y = distance_covered, fill = time_span), data = summary.deliveries)
-                      + geom_bar(stat= "identity") + ylab("covered distance in km") 
-                      + theme_light() + ggtitle("Walking distances")) + scale_x_continuous(name = "Stop index", seq(1, nrow(summary.deliveries),1))
-
-# plot routes (driving)
-plot_drive_time <- (ggplot(aes(x = index, y = time_span, fill = distance_covered), data = summary.driving)
-                    + geom_bar(stat= "identity") + ylab("drive time in mins")
-                    + theme_light() + ggtitle("Delivery time spans")) + scale_x_continuous(name = "Drive segment index", seq(1, nrow(summary.driving),1))
-plot_drive_dist <- (ggplot(aes(x = index, y = distance_covered, fill = time_span), data = summary.driving)
-                    + geom_bar(stat= "identity") + ylab("covered distance in km") + scale_x_continuous(name = "Drive segment index", seq(1, nrow(summary.driving),1))
-                    + theme_light() + ggtitle("Driving distances")) 
-
-plot_meds <- grid.arrange(plot_comp_time, plot_deliver_time, plot_drive_time,
-                          plot_comp_distance, plot_deliver_dist, plot_drive_dist,
-                          nrow=2, ncol = 3, top = "Medical route")
-#plot_meds
-ggsave("med_routes_overview.png", plot = plot_meds, width = 14, height = 8)
-#plot_speed_overall <- ggplot(data = segm_med) + geom_line(aes(x=index, y = speed.m.per.h), colour="black") + geom_line(aes(x = index, y = lowess.speed), colour = "red")
-
-# GROCERY ROUTES
-summary.data <- get_data(segm_groc)
-summary.deliveries <- get_del(segm_groc)
-summary.driving <- get_dri(segm_groc)
-
-# plot comparisons
-plot_comp_time <- ggplot(aes(x= mode, y = time_span, fill = mode), data = summary.data) + geom_boxplot() + theme_light() + ylab("time in minutes") + xlab("process step") + ggtitle("Time span distributions")
-plot_comp_distance <- ggplot(aes(x= mode, y = distance_covered, fill = mode), data = summary.data) + geom_boxplot() + theme_light() + ylab("distance in km") + xlab("process step") + ggtitle("Distance distributions")
-# plot deliveries
-plot_deliver_time <- (ggplot(aes(x = index, y = time_span, fill = distance_covered), data = summary.deliveries)
-                      + geom_bar(stat= "identity") + ylab("delivery time in mins") 
-                      + theme_light() + ggtitle("Delivery time spans")) + scale_x_continuous(name = "Stop index", seq(1, nrow(summary.deliveries),1))
-plot_deliver_dist <- (ggplot(aes(x = index, y = distance_covered, fill = time_span), data = summary.deliveries)
-                      + geom_bar(stat= "identity") + ylab("covered distance in km") 
-                      + theme_light() + ggtitle("Walking distances")) + scale_x_continuous(name = "Stop index", seq(1, nrow(summary.deliveries),1))
-
-# plot routes (driving)
-plot_drive_time <- (ggplot(aes(x = index, y = time_span, fill = distance_covered), data = summary.driving)
-                    + geom_bar(stat= "identity") + ylab("drive time in mins")
-                    + theme_light() + ggtitle("Delivery time spans")) + scale_x_continuous(name = "Drive segment index", seq(1, nrow(summary.driving),1))
-plot_drive_dist <- (ggplot(aes(x = index, y = distance_covered, fill = time_span), data = summary.driving)
-                    + geom_bar(stat= "identity") + ylab("covered distance in km") + scale_x_continuous(name = "Drive segment index", seq(1, nrow(summary.driving),1))
-                    + theme_light() + ggtitle("Driving distances")) 
-
-plot_meds <- grid.arrange(plot_comp_time, plot_deliver_time, plot_drive_time,
-                          plot_comp_distance, plot_deliver_dist, plot_drive_dist,
-                          nrow=2, ncol = 3, top = "Grocery route")
-#plot_groc
-ggsave("groc_routes_overview.png", plot = plot_groc, width = 14, height = 8)
-#plot_speed_overall <- ggplot(data = segm_groc) + geom_line(aes(x=index, y = speed.m.per.h), colour="black") + geom_line(aes(x = index, y = lowess.speed), colour = "red")
 
 
+### plots for presentation
+# pie for partking types
+one_pager <- function(stops_data, seg_data, source_folder_name, data_name){
+  # pre-processing
+  k <- as.data.frame(stops_data %>% group_by(parking_type) %>% summarize(count=n()))
+  k[, "perc"] <- round(k$count/sum(k$count),2)
+  count.data <- k %>%
+    arrange(desc(parking_type)) %>%
+    mutate(lab.ypos = cumsum(perc) - 0.5*perc)
+  count.data
+  for (i in 1:nrow(count.data)){
+    if (count.data$parking_type[i] == "no parking"){
+      count.data[i,"color_code"] <- "#CD534CFF"
+    } else if (count.data$parking_type[i] == "paid parking"){
+      count.data[i,"color_code"] <- "#EFC000FF"
+    } else if (count.data$parking_type[i] == "customer parking"){
+      count.data[i,"color_code"] <- "#0073C2FF"
+    } else if (count.data$parking_type[i] == "commercial vehicle loading zone"){
+      count.data[i,"color_code"] <- "#059033"
+    } else if (count.data$parking_type[i] == "passenger loading zone"){
+      count.data[i, "color_code"] <- "#868686FF"
+    } else if (count.data$parking_type[i] == "alley"){
+      count.data[i, "color_code"] <- "#A569BD"
+    } else if (count.data$parking_type[i] == "travel lane"){
+      count.data[i,"color_code"] <- "#E67E22"
+    }
+  }
+  
+  # plot
+  p1 <- ggplot(count.data, aes(x = 2, y = perc, fill = parking_type)) +
+    geom_bar(stat = "identity", color = "white") +
+    coord_polar(theta = "y", start = 0)+
+    geom_text(aes(y = lab.ypos, label = paste0(round(count/sum(count)*100, 1),"%")))+
+    scale_fill_manual("Parking type", values = count.data$color_code) +
+    theme_void()+
+    xlim(0.5, 2.5)+
+    ggtitle("Parking zone use during deliveries")
+  p1
+  
+  # pre-process
+  summary.data <- get_data(seg_data)
+  shares <- as.data.frame(summary.data %>% group_by(mode) %>% summarize(total_time=sum(time_span)))
+  shares[, "perc"] <- round(shares$total_time/sum(shares$total_time),2)
+  share.data <- shares %>%
+    #arrange(desc(mode)) %>%
+    mutate(lab.ypos = cumsum(perc) - 0.5*perc)
+  share.data$mode[share.data$mode == "drive"] <- "inside vehicle"
+  share.data$mode[share.data$mode == "deliver"] <- "outside vehicle"
+  
+  # plot
+  mycols <- c("#0073C2FF", "#EFC000FF", "#868686FF", "#CD534CFF")
+  p2 <- ggplot(share.data, aes(x = 2, y = perc, fill = mode)) +
+    geom_bar(stat = "identity", color = "white") +
+    coord_polar(theta = "y", start = 0)+
+    geom_text(aes(y = lab.ypos, label = paste0(round(total_time/sum(total_time)*100, 1),"%")))+
+    scale_fill_manual("Time share spent", values = mycols) +
+    theme_void()+
+    xlim(0.5, 2.5)+
+    ggtitle("Vehicle occupancy rate")
+  p2
+  
+  # pre-process
+  int_breaks <- function(x, n = 5) pretty(x, n)[pretty(x, n) %% 1 == 0] 
+  # plot
+  summary.deliveries = get_del(seg_data)
+  # p3 <- ggplot(summary.deliveries, aes(x = time_span)) +
+  #   geom_histogram(color = "#CD534CFF", fill = "#CD534CFF") + theme_light() +
+  #   geom_vline(aes(xintercept=mean(time_span)), color="blue", linetype="dashed", size=1) + 
+  #   geom_density(alpha=.2, fill="#FF6666") + scale_y_continuous(breaks= int_breaks) + ylim(c(0,5)) +
+  #   xlab("dwell time in mins") + ggtitle("Vehicle dwell time in parking position")
+  # p3
+  
+  p3 <- (ggplot(aes(x = index, y = time_span), data = summary.deliveries)
+                        + geom_bar(stat= "identity", colour = "#0073C2FF", fill = "#0073C2FF") + ylab("delivery time in mins")
+                        + theme_light() + ggtitle("Delivery time spans") + scale_x_continuous(name = "Stop index", seq(1, nrow(summary.deliveries),1)) 
+         + geom_hline(aes(yintercept = mean(time_span)), color = "red", linetype = "dashed", size = 1))
+  
+  summary.tab <- get_data(seg_data)
+  splits <- as.data.frame(summary.tab %>% group_by(mode) %>% summarize(count=n()))
+  
+  overv <- c(round(mean(summary.tab$avg.speed[!is.infinite(summary.tab$avg.speed)]),2), 
+           round(sum(summary.tab$distance_covered[!is.infinite(summary.tab$distance_covered)])*0.621371,2),
+           splits$count[splits$mode == "drive"]-1)
+  names <- c("Average speed (mph)", "Total distance (m)", "Number of stops")
+  overv <- cbind(names, overv)
+  ta <- tableGrob(t(overv), theme = ttheme_minimal(), rows = NULL)
+ 
+  
+  pA <- ggplotGrob(p1)
+  pB <- ggplotGrob(p2)
+  pB$widths <- pA$widths
+  s <- grid.arrange(ta, p3, pA, pB, ncol = 2, nrow = 2)
+  s
+  ggsave(s, width = 10, height = 7, filename = paste0(source_folder_name,"/",data_name, "_summary_vis.png"))
+}
+
+one_pager(stops_groc, segm_groc, "USPack_groceries", "USPack_Grocery_placards")
+one_pager(stops_med, segm_med, "USPack_medical", "USPack_medical")
+one_pager(stops_del_pick, segm_del_pick,"USPS_del_pick", "USPS_del_pick")
+one_pager(stops_pick, segm_pick, "USPS_pick_large", "USPS_pick_large")
+one_pager(stops_peps, segm_peps, "PepsiCo", "PepsiCo")
+
+
+  
