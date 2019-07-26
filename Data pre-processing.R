@@ -53,6 +53,15 @@ extr_loc_stops <- function(source_folder_name, data_name){
   write.csv(picsloc, paste0(source_folder_name,"/",data_name, "_stops.csv"), row.names = F)
 }
 
+## EXECUTION 
+# Execute location stop files
+extr_loc_stops("USPack_groceries", "USPack_Grocery_placards")
+extr_loc_stops("USPack_medical", "USPack_medical")
+extr_loc_stops("USPS_del_pick", "USPS_del_pick")
+extr_loc_stops("USPS_pick_large", "USPS_pick_large")
+#extr_loc_stops("PepsiCo", "PepsiCo") #has been modified manually
+# unfortunately no location data collected for USPS pick large
+
 # function to extract GPS traces
 extr_gps_trace <- function(source_folder_name, data_name){
   library(plotKML)
@@ -63,7 +72,8 @@ extr_gps_trace <- function(source_folder_name, data_name){
     rawlist <- xmlToList(xmlRoot(raw))$trk
     ll <- unlist(rawlist[names(rawlist) == "trkseg"], recursive = FALSE)
     gpxa <- do.call(rbind.fill, lapply(ll, function(x) as.data.frame(t(unlist(x)), stringsAsFactors=F)))
-    wpfull <- bind_rows(wpfull, gpxa)
+    wpfull <- rbind(wpfull, gpxa)
+    print(nrow(wpfull))
   }
   names(wpfull) <- c("elevation", "datetime", "speed","hacc", "vacc", "steps", "lat", "lon", "course") #check names reflect variables content
   write.csv(wpfull, paste0(source_folder_name, "/", data_name, "_route.csv"), row.names = F)
@@ -90,20 +100,13 @@ extr_route_seg <- function(source_folder_name, data_name){
                         segm_id = parse_number(names(wps1[i])))
     }
     seg <- rbind.fill(wps1)
-    wpx <- bind_rows(wpx, seg)
+    wpx <- rbind(wpx, seg)
+    print(nrow(wpx))
   }
-  write.csv(seg, paste0(source_folder_name, "/", data_name, "_segs.csv"), row.names = F)
+  write.csv(wpx, paste0(source_folder_name, "/", data_name, "_segs.csv"), row.names = F)
 }
 
 ### EXECUTION
-
-# Execute location stop files
-extr_loc_stops("USPack_groceries", "USPack_Grocery_placards")
-extr_loc_stops("USPack_medical", "USPack_medical")
-extr_loc_stops("USPS_del_pick", "USPS_del_pick")
-extr_loc_stops("USPS_pick_large", "USPS_pick_large")
-#extr_loc_stops("PepsiCo", "PepsiCo") #has been modified manually
-# unfortunately no location data collected for USPS pick large
 
 # Execute GPS trace files
 extr_gps_trace("USPack_groceries", "USPack_Grocery_placards")
@@ -115,6 +118,6 @@ extr_gps_trace("PepsiCo", "PepsiCo")
 # Execute GPS segment files
 extr_route_seg("USPack_groceries", "USPack_Grocery_placards")
 extr_route_seg("USPack_medical", "USPack_medical")
-extr_route_seg("USPS_del_pick", "USPS_del_pick")
+#extr_route_seg("USPS_del_pick", "USPS_del_pick") manually modified
 extr_route_seg("USPS_pick_large", "USPS_pick_large")
 extr_route_seg("PepsiCo", "PepsiCo")
