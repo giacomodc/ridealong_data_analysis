@@ -25,7 +25,7 @@ library(reshape2)
 library(scales)
 
 # set directory here
-setwd("~/Documents/University/University of Washington/RA positions/SCTL/DOE/Ridealong Data analysis")
+setwd("")
 
 ### LOAD and TRANSFORM DATA
 
