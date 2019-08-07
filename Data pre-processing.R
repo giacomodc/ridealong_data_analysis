@@ -18,7 +18,7 @@ library(dplyr)
 library(readr)
 
 # set directory here
-setwd("~/Documents/University/University of Washington/RA positions/SCTL/DOE/Ridealong Data analysis")
+setwd("")
 
 ### PRE-PROCESS DATA FUNCTIONS
 
