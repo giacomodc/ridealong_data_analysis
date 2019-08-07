@@ -26,7 +26,7 @@ setwd("~/Documents/University/University of Washington/RA positions/SCTL/DOE/Rid
 extr_park_info <- function(source_folder_name, data_name){
   #park <- read.csv(paste0(source_folder_name,"/",data_name, "_parking.csv"), stringsAsFactors=F, sep=';') # read in data for route
   #parking.type <- select(park, Time, Parking.Type)
-  # no smart way to mathch this yet read this yet, WIP
+  # no smart way to read this yet as number of stops very low and manual coding much quicker, WIP
   # manually obtained parking types from csv files:
   if (source_folder_name == "USPack_groceries"){
     parking.type <- c("CP", "N", "N", "N", "N", "N", "N", "N", "P","CP", "P","CP","N","CP", "N", "CP", "CP", "CP", "N")
